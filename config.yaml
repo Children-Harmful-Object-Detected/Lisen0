@@ -1,0 +1,13 @@
+# Configuration for LiSEN Dashboard
+
+paths:
+  # Paths to data sources
+  data:
+    raw_videos: ./data/raw
+
+  # Paths to champion models used for inference and labeling
+  models:
+    yolo_champion: ./models/Lisen.pt
+    transformer_judge: ./models/transformer_action_risk.pt
+
+# Note: Other parameters can be added here later.
