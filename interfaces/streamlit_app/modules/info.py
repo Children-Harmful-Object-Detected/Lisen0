@@ -12,6 +12,8 @@ import tempfile
 from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
+from interfaces.streamlit_app.modules.model_loader import load_models
+
 # =========================================================
 # YOLO Pose → 34차원 추출
 # =========================================================
@@ -20,11 +22,11 @@ def extract_pose_vector(result):
         if (not hasattr(result, "keypoints")) or (result.keypoints is None):
             return None
 
-        kps_xy = result.keypoints.xyn[0].cpu().numpy()
+        kps_xy = result.keypoints.xyn[0].cpu().numpy() # <-- Accesses first person's keypoints
         flat = kps_xy.flatten().astype(np.float32)
 
         return flat if len(flat) == 34 else None
-    except:
+    except: # <-- Catches all exceptions
         return None
 
 
