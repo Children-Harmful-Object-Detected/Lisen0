@@ -54,7 +54,7 @@ st.set_page_config(
 from interfaces.streamlit_app.common.sidebar import render_sidebar
 from interfaces.streamlit_app.tabs import (
     tab0, tab1, tab2, tab3, tab4, tab5,
-    tab6, tab7, tab8, tab9, tab10, tab11, tab12
+    tab6, tab7, tab8, tab9, tab11
 )
 
 # --- Main App ---
@@ -124,9 +124,7 @@ TABS = st.tabs([
     "7️⃣ Transformer 학습",
     "8️⃣ 모델 추론",
     "9️⃣ 실시간 위험 감지",
-    "🔟 직접 추론",
-    "1️⃣1️⃣ 게시판",
-    "🔬 V2 실험실",
+    "📋 게시판",
 ])
 
 # --- Tab Rendering ---
@@ -150,9 +148,6 @@ with TABS[8]:
     tab8.render_tab(MODEL_YOLO, MODEL_DIR, DATA_PROC)
 with TABS[9]:
     tab9.render_tab(RESULTS_DIR)
-with TABS[10]:
-    tab10.render_tab(MODEL_YOLO, MODEL_DIR, RESULTS_DIR)
-with TABS[11]:
+with TABS[10]: # This is now the old TABS[11]
     tab11.render_tab(PROJECT_ROOT)
-with TABS[12]:
-    tab12.render_tab(MODEL_DIR, DATA_PROC)
+    
