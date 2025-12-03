@@ -39,23 +39,16 @@ class RealtimeVideoProcessor:
         # --- 1. Run combined YOLO model (Lisen.pt) ---
         results_combined = self.yolo_combined(frame, conf=self.conf_threshold, verbose=False)[0]
         
-        # --- 2. Extract Pose Vector for Transformer ---
-        if hasattr(results_combined, "keypoints") and results_combined.keypoints is not None:
-            # st.write(f"Keypoints found: {len(results_combined.keypoints.data)}") # Debug line
-            pose_vec = extract_pose_vector(results_combined)
-        else:
-            pose_vec = None
+                    # --- 2. Extract Pose Vector for Transformer ---
+                    # Assuming extract_pose_vector can handle combined results directly
+                    pose_vec = extract_pose_vector(results_combined) 
+                    
+                    if pose_vec is not None:
+                        self.seq_buffer.append(pose_vec)
         
-        # st.write(f"Pose Vec extracted: {pose_vec is not None}, Buffer len: {len(self.seq_buffer)}") # Debug line
-
-        if pose_vec is not None:
-            self.seq_buffer.append(pose_vec)
-
-        # --- 3. Run Transformer if buffer is full ---
-        if len(self.seq_buffer) == 12: # Full sequence length
-            # st.write("Transformer buffer is full, running inference...") # Debug line
-            seq = np.array(self.seq_buffer, dtype=np.float32)
-            seq_tensor = torch.tensor(seq).unsqueeze(0).to(self.device)
+                    # --- 3. Run Transformer if buffer is full ---
+                    if len(self.seq_buffer) == 12: # Full sequence length
+                        seq = np.array(self.seq_buffer, dtype=np.float32)            seq_tensor = torch.tensor(seq).unsqueeze(0).to(self.device)
 
             with torch.no_grad():
                 out = self.transformer(seq_tensor)
