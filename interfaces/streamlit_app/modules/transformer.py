@@ -6,7 +6,10 @@ from sklearn.model_selection import train_test_split
 from pathlib import Path
 import time
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
 # --------------------------
 # Dataset
 # --------------------------
@@ -21,6 +24,39 @@ class PoseSeqDataset(Dataset):
     def __getitem__(self, idx):
         return self.X[idx], self.Y[idx]
 
+<<<<<<< HEAD
+# --------------------------
+# Transformer Classifier (Updated to match RiskTransformer)
+# --------------------------
+class TransformerClassifier(nn.Module):
+    def __init__(self, input_dim, num_classes, d_model=128, nhead=4, num_layers=3, dim_ff=2048, max_len=5000):
+        super().__init__()
+        # Match variable names with the trained RiskTransformer model
+        self.input_embedding = nn.Linear(input_dim, d_model) 
+        self.pos_embedding = nn.Parameter(torch.randn(1, max_len, d_model))
+        
+        encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=dim_ff, batch_first=True)
+        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+        
+        self.fc = nn.Linear(d_model, num_classes)
+        self.dropout = nn.Dropout(0.1)
+
+    def forward(self, x):
+        # x: (Batch, Seq_Len, Input_Dim)
+        B, T, _ = x.shape
+        
+        x = self.input_embedding(x) # (B, T, Hidden)
+        x = x + self.pos_embedding[:, :T, :] # Add Positional Encoding
+        x = self.dropout(x)
+        
+        x = self.transformer_encoder(x) # (B, T, Hidden)
+        
+        # Taking the last token representation
+        x = x[:, -1, :] # (B, Hidden)
+        
+        return self.fc(x)
+
+=======
 
 # --------------------------
 # Positional Encoding
@@ -65,6 +101,7 @@ class TransformerClassifier(nn.Module):
         return self.fc(x)
 
 
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
 # --------------------------
 # Training Function (FINAL)
 # --------------------------
@@ -84,9 +121,15 @@ def train_transformer_model(
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
+<<<<<<< HEAD
+    # ============================================================ 
+    # 🔥 1) 증강된 시퀀스 파일 우선 사용
+    # ============================================================ 
+=======
     # ============================================================
     # 🔥 1) 증강된 시퀀스 파일 우선 사용
     # ============================================================
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
     seq_path = Path(seq_path)
     seq_dir = seq_path.parent
 
@@ -100,17 +143,29 @@ def train_transformer_model(
         print("📁 증강본 없음 → 원본 시퀀스 사용합니다.")
         seq_file = seq_org
 
+<<<<<<< HEAD
+    # ============================================================ 
+    # 2) 파일 유효성 체크
+    # ============================================================ 
+=======
     # ============================================================
     # 2) 파일 유효성 체크
     # ============================================================
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
     if not seq_file.exists():
         raise FileNotFoundError(f"❌ 시퀀스 파일이 없습니다: {seq_file}")
 
     print(f"👉 사용 중인 시퀀스 파일: {seq_file}")
 
+<<<<<<< HEAD
+    # ============================================================ 
+    # 3) Load Data
+    # ============================================================ 
+=======
     # ============================================================
     # 3) Load Data
     # ============================================================
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
     data = np.load(seq_file, allow_pickle=True)
     X, Y = data["X"], data["Y"]
 
@@ -213,4 +268,8 @@ def train_transformer_model(
     if log_f:
         log_f.close()
 
+<<<<<<< HEAD
     return best_acc
+=======
+    return best_acc
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193

@@ -8,9 +8,16 @@ from interfaces.streamlit_app.modules.transformer import TransformerClassifier
 import pandas as pd
 import io
 import tempfile
+<<<<<<< HEAD
+import json # for loading risk json
+
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+=======
 
 from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
 
 from interfaces.streamlit_app.modules.model_loader import load_models
 
@@ -34,6 +41,26 @@ def extract_pose_vector(result):
 # Pose overlay
 # =========================================================
 def draw_pose_on_image(img, r_pose, names):
+<<<<<<< HEAD
+    """
+    Use Ultralytics built-in plot() function for beautiful skeleton visualization.
+    """
+    if r_pose.keypoints is None:
+        return img, []
+
+    # r_pose.plot() returns a new numpy array (BGR) with annotations.
+    # arguments:
+    # - boxes=True: Draw bounding boxes for persons
+    # - kpt_line=True: Draw skeleton lines (default is True)
+    # - conf=False: Cleaner look without person confidence score
+    # - labels=False: Cleaner look without "person" label text
+    annotated_img = r_pose.plot(boxes=True, kpt_line=True, conf=False, labels=False)
+    
+    # plot() creates a new image, so we return it.
+    # We return an empty list for used_y because plot() handles its own text placement,
+    # and we can't easily track where it drew text to avoid overlaps for the next function.
+    return annotated_img, []
+=======
 
     pose_boxes = []
 
@@ -62,6 +89,7 @@ def draw_pose_on_image(img, r_pose, names):
         # Removed code that draws the text label
 
     return img, used_y
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
 
 
 # =========================================================
@@ -72,6 +100,14 @@ def draw_box_on_image(img, r_box, names, pose_used_y):
     if r_box.boxes is None:
         return img
 
+<<<<<<< HEAD
+    box_entries = []
+    for box in r_box.boxes:
+        x1, y1, x2, y2 = box.xyxy[0]
+        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+        area = (x2 - x1) * (y2 - y1)
+        
+=======
     korean_names_map = {
         "violence": "폭력감지",
         "nonviolence": "정상"
@@ -80,10 +116,79 @@ def draw_box_on_image(img, r_box, names, pose_used_y):
     box_entries = []
     for box in r_box.boxes:
         x1, y1, x2, y2 = box.xyxy[0]
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
         cls = int(box.cls[0])
         conf = float(box.conf[0])
         cls_name = names[cls].lower()
 
+<<<<<<< HEAD
+        # Determine Group and Color
+        if "violence" in cls_name or "폭력" in cls_name:
+             if "non" in cls_name or "비" in cls_name or "정상" in cls_name:
+                 display_name = "Non-Violence"
+                 cls_group = "nonviolence"
+                 box_color = (0, 255, 0) # Green
+             else:
+                 display_name = "Violence"
+                 cls_group = "violence"
+                 box_color = (0, 0, 255) # Red
+        elif "normal" in cls_name or "정상" in cls_name:
+            display_name = "Normal"
+            cls_group = "nonviolence"
+            box_color = (0, 255, 0)
+        elif "adult" in cls_name or "어른" in cls_name or "person" in cls_name:
+            display_name = "Adult"
+            cls_group = "person"
+            box_color = (255, 0, 0) # Blue
+        elif "child" in cls_name or "아이" in cls_name:
+            display_name = "Child"
+            cls_group = "child"
+            box_color = (0, 255, 255) # Yellow
+        else:
+            display_name = cls_name
+            cls_group = "other"
+            box_color = (200, 200, 200) # Gray
+
+        label = f"{display_name} {conf:.2f}"
+        box_entries.append({"coords": (x1, y1, x2, y2), "label": label, "color": box_color, "area": area})
+
+    # Sort by Area Descending (Draw large boxes first)
+    box_entries = sorted(box_entries, key=lambda x: x["area"], reverse=True)
+    
+    used_y = pose_used_y.copy()
+
+    for entry in box_entries:
+        x1, y1, x2, y2 = entry["coords"]
+        color = entry["color"]
+        label = entry["label"]
+
+        # Draw Outline (Black)
+        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 0), 4)
+        # Draw Box (Color)
+        cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+
+        # Label Position with Collision Avoidance
+        ty = y1 - 10
+        # Simple collision check against existing labels
+        # If too close to top, move inside
+        if ty < 20: ty = y1 + 20
+        
+        # Shift down if overlapping with previous labels
+        retry = 0
+        while any(abs(ty - uy) < 25 for uy in used_y) and retry < 5:
+            ty += 25 # Move down
+            retry += 1
+
+        used_y.append(ty)
+
+        # Label Background (Black)
+        (text_w, text_h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)
+        cv2.rectangle(img, (x1, ty - text_h - 4), (x1 + text_w + 4, ty + 4), (0, 0, 0), -1)
+        # Label Text (Color or White)
+        cv2.putText(img, label, (x1 + 2, ty),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6,
+                    color, 1, cv2.LINE_AA) # Use box color for text for correlation
+=======
         display_name = korean_names_map.get(cls_name, names[cls])
         label = f"{display_name} {conf:.2f}"
         box_entries.append((x1, y1, x2, y2, label, cls_name))
@@ -115,6 +220,7 @@ def draw_box_on_image(img, r_box, names, pose_used_y):
         cv2.putText(img, label, (int(x1), ty),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.55,
                     (255, 255, 255), 1, cv2.LINE_AA)
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
 
     return img
 
@@ -122,7 +228,11 @@ def draw_box_on_image(img, r_box, names, pose_used_y):
 # =========================================================
 # 영상 전체 분석
 # =========================================================
+<<<<<<< HEAD
+def analyze_video(video_path, yolo_pose_model, yolo_box_model, transformer_model, original_name):
+=======
 def analyze_video(video_path, yolo_pose, yolo_box, transformer, original_name):
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
 
     import json
     import cv2
@@ -136,8 +246,13 @@ def analyze_video(video_path, yolo_pose, yolo_box, transformer, original_name):
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = cap.get(cv2.CAP_PROP_FPS)
 
+<<<<<<< HEAD
+    w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)) # Corrected
+    h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) # Corrected
+=======
     w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
 
     # ---------------------------------------------------------
     # 🔥 영상 해상도 절반으로 줄이기 (용량 1/4~1/6로 감소)
@@ -189,6 +304,15 @@ def analyze_video(video_path, yolo_pose, yolo_box, transformer, original_name):
                 break
 
             # ---------------- YOLO Pose ----------------
+<<<<<<< HEAD
+            r_pose = yolo_pose_model(frame, conf=0.7)[0]
+            img = frame.copy()
+            img, pose_used_y = draw_pose_on_image(img, r_pose, yolo_pose_model.names)
+
+            # ---------------- YOLO Box ----------------
+            r_box = yolo_box_model(frame, conf=0.5)[0]
+            img = draw_box_on_image(img, r_box, yolo_box_model.names, pose_used_y)
+=======
             r_pose = yolo_pose(frame, conf=0.7)[0]
             img = frame.copy()
             img, pose_used_y = draw_pose_on_image(img, r_pose, yolo_pose.names)
@@ -196,6 +320,7 @@ def analyze_video(video_path, yolo_pose, yolo_box, transformer, original_name):
             # ---------------- YOLO Box ----------------
             r_box = yolo_box(frame, conf=0.5)[0]
             img = draw_box_on_image(img, r_box, yolo_box.names, pose_used_y)
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
 
             # ---------------- Transformer ----------------
             pose_vec = extract_pose_vector(r_pose)
@@ -207,7 +332,11 @@ def analyze_video(video_path, yolo_pose, yolo_box, transformer, original_name):
                 seq_tensor = torch.tensor(seq).unsqueeze(0).to(device)
 
                 with torch.no_grad():
+<<<<<<< HEAD
+                    out = transformer_model(seq_tensor)
+=======
                     out = transformer(seq_tensor)
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
                     prob = torch.softmax(out, dim=1)[0].cpu().numpy()
 
                 pred = int(np.argmax(prob))
@@ -254,19 +383,52 @@ def analyze_video(video_path, yolo_pose, yolo_box, transformer, original_name):
     progress.progress(1.0)
     st.success(f"🎉 분석 완료! 저장된 영상: {save_name}")
     st.info(f"💾 위험도 JSON 저장: {json_path}")
+<<<<<<< HEAD
+    
+    return str(save_name)
+=======
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
 
 
 # =========================================================
 # 프레임 미리보기 + 라벨링
 # =========================================================
 def show_frame_labeling_tab(MODEL_YOLO, selected_video):
+<<<<<<< HEAD
+    st.header("🖼️ 프레임 라벨링 및 상세 정보")
+
+    if not selected_video:
+        st.warning("영상이 선택되지 않았습니다. 모델 추론 탭에서 영상을 분석해주세요.")
+        return
+=======
 
     st.header("")
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
 
     # ------------------------------
     # 총 프레임 수 읽기
     # ------------------------------
     cap = cv2.VideoCapture(str(selected_video))
+<<<<<<< HEAD
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) # Corrected
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    cap.release()
+
+    st.info(f"총 프레임 수: **{total_frames}**, FPS: **{fps:.2f}**")
+
+    # ------------------------------
+    # 프레임 슬라이더
+    # ------------------------------
+    # 고유한 키를 사용하여 session_state 충돌 방지
+    if "label_frame_idx" not in st.session_state:
+        st.session_state.label_frame_idx = 0
+
+    frame_idx = st.slider("프레임 선택", 0, total_frames - 1, st.session_state.label_frame_idx, key="label_slider")
+    st.session_state.label_frame_idx = frame_idx
+
+    # ------------------------------
+    # 프레임 이미지 표시
+=======
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = cap.get(cv2.CAP_PROP_FPS)
     cap.release()
@@ -292,12 +454,50 @@ def show_frame_labeling_tab(MODEL_YOLO, selected_video):
 
     # ------------------------------
     # 선택 프레임 로드
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
     # ------------------------------
     cap = cv2.VideoCapture(str(selected_video))
     cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
     ret, frame = cap.read()
     cap.release()
 
+<<<<<<< HEAD
+    if ret:
+        st.image(frame, channels="BGR", caption=f"프레임 {frame_idx} / {total_frames}")
+        
+        # ------------------------------
+        # 프레임 상세 정보 (예시)
+        # ------------------------------
+        st.markdown("---")
+        st.subheader(f"📊 프레임 {frame_idx} 상세 정보")
+        
+        # 해당 프레임의 risk JSON 데이터 로드
+        name_stem = Path(selected_video).stem
+        risk_json_path = PROJECT_ROOT / "results" / "risk" / f"{name_stem}.json"
+
+        if risk_json_path.exists():
+            try:
+                with open(risk_json_path, "r", encoding="utf-8") as f:
+                    risk_data = json.load(f)
+                
+                # 'analyze_video'에서 저장된 'risk_log'는 'frame' 키를 가집니다.
+                frame_risk_info = [item for item in risk_data if item['frame'] == frame_idx]
+                if frame_risk_info:
+                    st.json(frame_risk_info[0])
+                else:
+                    st.info("해당 프레임의 위험도 정보가 없습니다.")
+            except json.JSONDecodeError:
+                st.error("위험도 JSON 파일을 읽는 중 오류가 발생했습니다. 파일 형식을 확인해주세요.")
+        else:
+            st.info("위험도 JSON 파일을 찾을 수 없습니다. 영상을 다시 분석해주세요.")
+
+    else:
+        st.warning("선택된 프레임을 로드할 수 없습니다.")
+
+
+# =========================================================
+# 모델 추론 탭
+=======
     # =============================
     # 🔥 단 한 번만 이미지 출력 (위쪽)
     # =============================
@@ -474,6 +674,7 @@ def show_frame_labeling_tab(MODEL_YOLO, selected_video):
 
 # =========================================================
 # 모델 추론 탭 (업로드 하나로 통일)
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
 # =========================================================
 def show_model_inference_tab(MODEL_YOLO, MODEL_DIR, DATA_PROC):
 
@@ -528,6 +729,11 @@ def show_model_inference_tab(MODEL_YOLO, MODEL_DIR, DATA_PROC):
     # ▶ 모델 로드
     # ----------------------------------------------------------------------
     device = "cuda" if torch.cuda.is_available() else "cpu"
+<<<<<<< HEAD
+    # Use load_models from model_loader with config path
+    config_file_path = PROJECT_ROOT / "config.yaml"
+    yolo_pose, yolo_box, transformer = load_models(config_file_path)
+=======
 
     yolo_pose = YOLO(str(MODEL_YOLO))
     yolo_box = YOLO(str(MODEL_YOLO))
@@ -540,6 +746,7 @@ def show_model_inference_tab(MODEL_YOLO, MODEL_DIR, DATA_PROC):
     )
     transformer.to(device)
     transformer.eval()
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
 
     # ----------------------------------------------------------------------
     # ▶ 분석 실행
@@ -547,12 +754,31 @@ def show_model_inference_tab(MODEL_YOLO, MODEL_DIR, DATA_PROC):
     if start_clicked:
         st.session_state.stop = False
         with st.spinner("⏳ 영상 분석 중입니다..."):
+<<<<<<< HEAD
+            result_path = analyze_video(
+=======
             analyze_video(
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
                 selected_video, 
                 yolo_pose, 
                 yolo_box, 
                 transformer,
                 st.session_state["original_video_name"]  # 🔥 중요
             )
+<<<<<<< HEAD
+            st.session_state['result_video_path'] = result_path
 
+    # ----------------------------------------------------------------------
+    # ▶ 결과 네비게이션 (Result Navigation)
+    # ----------------------------------------------------------------------
+    # 이 부분은 show_frame_labeling_tab이 처리하므로 주석 처리
+    if 'result_video_path' in st.session_state and Path(st.session_state['result_video_path']).exists():
+        # result_video_path는 analyze_video에서 저장된 preview 영상 경로입니다.
+        # 이 경로를 selected_video로 반환하여 show_frame_labeling_tab에서 사용하도록 합니다.
+        return st.session_state['result_video_path']
+    
+    # 분석 시작 전에는 uploaded_file의 temp_video.name을 반환
+=======
+
+>>>>>>> 7e1f10b3d9713a69b94b2694c8247664e7e86193
     return selected_video
